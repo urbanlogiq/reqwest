@@ -27,25 +27,15 @@ features = [
 ]
 
 [features]
-default = ["default-tls", "charset", "http2", "macos-system-configuration"]
-
-# Note: this doesn't enable the 'native-tls' feature, which adds specific
-# functionality for it.
-default-tls = ["dep:hyper-tls", "dep:native-tls-crate", "__tls", "dep:tokio-native-tls"]
+default = ["rustls-tls", "charset", "http2", "macos-system-configuration"]
 
 http2 = ["h2", "hyper/http2", "hyper-util/http2", "hyper-rustls?/http2"]
-
-# Enables native-tls specific functionality not available by default.
-native-tls = ["default-tls"]
-native-tls-alpn = ["native-tls", "native-tls-crate?/alpn", "hyper-tls?/alpn"]
-native-tls-vendored = ["native-tls", "native-tls-crate?/vendored"]
 
 rustls-tls = ["rustls-tls-webpki-roots"]
 rustls-tls-no-provider = ["rustls-tls-manual-roots-no-provider"]
 
 rustls-tls-manual-roots = ["__rustls", "__rustls-ring"]
 rustls-tls-webpki-roots = ["dep:webpki-roots", "hyper-rustls?/webpki-tokio", "__rustls", "__rustls-ring"]
-rustls-tls-native-roots = ["dep:rustls-native-certs", "hyper-rustls?/native-tokio", "__rustls", "__rustls-ring"]
 rustls-tls-manual-roots-no-provider = ["__rustls"]
 
 blocking = ["dep:futures-channel", "futures-channel?/sink", "futures-util/io", "futures-util/sink", "tokio/sync"]
@@ -134,8 +124,6 @@ rustls-pemfile = { version = "2", optional = true }
 
 ## default-tls
 hyper-tls = { version = "0.6", optional = true }
-native-tls-crate = { version = "0.2.10", optional = true, package = "native-tls" }
-tokio-native-tls = { version = "0.3.0", optional = true }
 
 # rustls-tls
 hyper-rustls = { version = "0.27.0", default-features = false, optional = true, features = ["http1", "tls12"] }
@@ -143,7 +131,6 @@ rustls = { version = "0.23.4", optional = true, default-features = false, featur
 rustls-pki-types = { version = "1.1.0", features = ["alloc"] ,optional = true }
 tokio-rustls = { version = "0.26", optional = true, default-features = false, features = ["tls12"] }
 webpki-roots = { version = "0.26.0", optional = true }
-rustls-native-certs = { version = "0.7", optional = true }
 
 ## cookies
 cookie_crate = { version = "0.18.0", package = "cookie", optional = true }
