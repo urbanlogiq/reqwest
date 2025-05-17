@@ -34,18 +34,9 @@ features = [
 ]
 
 [features]
-default = ["default-tls", "charset", "http2", "system-proxy"]
-
-# Note: this doesn't enable the 'native-tls' feature, which adds specific
-# functionality for it.
-default-tls = ["dep:hyper-tls", "dep:native-tls-crate", "__tls", "dep:tokio-native-tls"]
+default = ["rustls-tls", "charset", "http2", "system-proxy"]
 
 http2 = ["h2", "hyper/http2", "hyper-util/http2", "hyper-rustls?/http2"]
-
-# Enables native-tls specific functionality not available by default.
-native-tls = ["default-tls"]
-native-tls-alpn = ["native-tls", "native-tls-crate?/alpn", "hyper-tls?/alpn"]
-native-tls-vendored = ["native-tls", "native-tls-crate?/vendored"]
 
 rustls-tls = ["rustls-tls-webpki-roots"]
 rustls-tls-no-provider = ["rustls-tls-manual-roots-no-provider"]
@@ -144,8 +135,6 @@ mime = { version = "0.3.16", optional = true }
 
 ## default-tls
 hyper-tls = { version = "0.6", optional = true }
-native-tls-crate = { version = "0.2.10", optional = true, package = "native-tls" }
-tokio-native-tls = { version = "0.3.0", optional = true }
 
 # rustls-tls
 hyper-rustls = { version = "0.27.0", default-features = false, optional = true, features = ["http1", "tls12"] }
