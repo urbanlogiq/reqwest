@@ -151,8 +151,6 @@ struct Config {
     tls_built_in_root_certs: bool,
     #[cfg(feature = "rustls-tls-webpki-roots-no-provider")]
     tls_built_in_certs_webpki: bool,
-    #[cfg(feature = "rustls-tls-native-roots-no-provider")]
-    tls_built_in_certs_native: bool,
     #[cfg(feature = "__rustls")]
     crls: Vec<CertificateRevocationList>,
     #[cfg(feature = "__tls")]
@@ -276,8 +274,6 @@ impl ClientBuilder {
                 tls_built_in_root_certs: true,
                 #[cfg(feature = "rustls-tls-webpki-roots-no-provider")]
                 tls_built_in_certs_webpki: true,
-                #[cfg(feature = "rustls-tls-native-roots-no-provider")]
-                tls_built_in_certs_native: true,
                 #[cfg(any(feature = "native-tls", feature = "__rustls"))]
                 identity: None,
                 #[cfg(feature = "__rustls")]
@@ -648,43 +644,6 @@ impl ClientBuilder {
                     #[cfg(feature = "rustls-tls-webpki-roots-no-provider")]
                     if config.tls_built_in_certs_webpki {
                         root_cert_store.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
-                    }
-
-                    #[cfg(feature = "rustls-tls-native-roots-no-provider")]
-                    if config.tls_built_in_certs_native {
-                        let mut valid_count = 0;
-                        let mut invalid_count = 0;
-
-                        let load_results = rustls_native_certs::load_native_certs();
-                        for cert in load_results.certs {
-                            // Continue on parsing errors, as native stores often include ancient or syntactically
-                            // invalid certificates, like root certificates without any X509 extensions.
-                            // Inspiration: https://github.com/rustls/rustls/blob/633bf4ba9d9521a95f68766d04c22e2b01e68318/rustls/src/anchors.rs#L105-L112
-                            match root_cert_store.add(cert.into()) {
-                                Ok(_) => valid_count += 1,
-                                Err(err) => {
-                                    invalid_count += 1;
-                                    log::debug!("rustls failed to parse DER certificate: {err:?}");
-                                }
-                            }
-                        }
-                        if valid_count == 0 && invalid_count > 0 {
-                            let err = if load_results.errors.is_empty() {
-                                crate::error::builder(
-                                    "zero valid certificates found in native root store",
-                                )
-                            } else {
-                                use std::fmt::Write as _;
-                                let mut acc = String::new();
-                                for err in load_results.errors {
-                                    let _ = writeln!(&mut acc, "{err}");
-                                }
-
-                                crate::error::builder(acc)
-                            };
-
-                            return Err(err);
-                        }
                     }
 
                     // Set TLS versions.
@@ -1808,11 +1767,6 @@ impl ClientBuilder {
             self.config.tls_built_in_certs_webpki = tls_built_in_root_certs;
         }
 
-        #[cfg(feature = "rustls-tls-native-roots-no-provider")]
-        {
-            self.config.tls_built_in_certs_native = tls_built_in_root_certs;
-        }
-
         self
     }
 
@@ -1832,7 +1786,6 @@ impl ClientBuilder {
     #[cfg(feature = "rustls-tls-native-roots-no-provider")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-tls-native-roots-no-provider")))]
     pub fn tls_built_in_native_certs(mut self, enabled: bool) -> ClientBuilder {
-        self.config.tls_built_in_certs_native = enabled;
         self
     }
 
