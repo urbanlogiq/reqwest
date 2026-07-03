@@ -1,12 +1,10 @@
 //! DNS resolution via the [hickory-resolver](https://github.com/hickory-dns/hickory-dns) crate
 
-use hickory_resolver::{
-    config::LookupIpStrategy, lookup_ip::LookupIpIntoIter, ResolveError, TokioResolver,
-};
+use hickory_resolver::{config::LookupIpStrategy, net::NetError, TokioResolver};
 use once_cell::sync::OnceCell;
 
 use std::fmt;
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 
 use super::{Addrs, Name, Resolve, Resolving};
@@ -21,11 +19,11 @@ pub(crate) struct HickoryDnsResolver {
 }
 
 struct SocketAddrs {
-    iter: LookupIpIntoIter,
+    iter: std::vec::IntoIter<IpAddr>,
 }
 
 #[derive(Debug)]
-struct HickoryDnsSystemConfError(ResolveError);
+struct HickoryDnsSystemConfError(NetError);
 
 impl Resolve for HickoryDnsResolver {
     fn resolve(&self, name: Name) -> Resolving {
@@ -35,7 +33,7 @@ impl Resolve for HickoryDnsResolver {
 
             let lookup = resolver.lookup_ip(name.as_str()).await?;
             let addrs: Addrs = Box::new(SocketAddrs {
-                iter: lookup.into_iter(),
+                iter: lookup.iter().collect::<Vec<_>>().into_iter(),
             });
             Ok(addrs)
         })
@@ -57,7 +55,7 @@ impl Iterator for SocketAddrs {
 fn new_resolver() -> Result<TokioResolver, HickoryDnsSystemConfError> {
     let mut builder = TokioResolver::builder_tokio().map_err(HickoryDnsSystemConfError)?;
     builder.options_mut().ip_strategy = LookupIpStrategy::Ipv4AndIpv6;
-    Ok(builder.build())
+    builder.build().map_err(HickoryDnsSystemConfError)
 }
 
 impl fmt::Display for HickoryDnsSystemConfError {
